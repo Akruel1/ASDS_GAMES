@@ -715,8 +715,10 @@ function createFloatingParticle() {
     };
 }
 
-// Создаем частицы периодически
-setInterval(createFloatingParticle, 2000);
+// Создаем частицы периодически (реже на мобильных для оптимизации)
+const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+const particleInterval = isMobileDevice ? 4000 : 2000; // На мобильных реже
+setInterval(createFloatingParticle, particleInterval);
 
 // ===== ADDITIONAL ENERGY LINES =====
 function createEnergyLine() {
@@ -772,8 +774,9 @@ function createEnergyLine() {
     };
 }
 
-// Создаем энергетические линии периодически
-setInterval(createEnergyLine, 3000);
+// Создаем энергетические линии периодически (реже на мобильных для оптимизации)
+const energyLineInterval = isMobileDevice ? 6000 : 3000; // На мобильных реже
+setInterval(createEnergyLine, energyLineInterval);
 
 // ===== SUBJECTS CONFIGURATION =====
 const subjectsConfig = {
@@ -1076,14 +1079,23 @@ function switchToCard(index, direction = 'next') {
     isSwitching = true;
     stopAutoRotation(); // Останавливаем авто-вращение при ручном переключении
     
+    // Определяем, мобильное ли устройство для оптимизации
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+    
     // Добавляем класс для анимации
     singleCard.classList.add('flipping');
+    
+    // Оптимизация для мобильных: используем will-change
+    if (isMobile) {
+        singleCard.style.willChange = 'transform';
+    }
     
     // Определяем направление вращения
     const rotation = direction === 'next' ? 180 : -180;
     const startRotation = 0;
     const targetRotation = rotation;
-    const duration = 600; // Длительность анимации
+    // На мобильных уменьшаем длительность для лучшей производительности
+    const duration = isMobile ? 400 : 600;
     const startTime = performance.now();
     
     // Плавная анимация вращения
@@ -1108,16 +1120,26 @@ function switchToCard(index, direction = 'next') {
             // Завершаем анимацию
             singleCard.classList.remove('flipping');
             singleCard.style.transform = 'rotateY(0deg)';
+            
+            // Убираем will-change после анимации для экономии ресурсов
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+            if (isMobile) {
+                setTimeout(() => {
+                    singleCard.style.willChange = 'auto';
+                }, 100);
+            }
+            
             isSwitching = false;
             animationFrameId = null;
             
-            // Возобновляем авто-вращение через 3 секунды
+            // Возобновляем авто-вращение через 3 секунды (на мобильных через 4)
+            const resumeDelay = isMobile ? 4000 : 3000;
             setTimeout(() => {
-                if (!isCardDragging && !isSwitching) {
+                if (!isCardDragging && !isSwitching && !isTouchActive) {
                     isAutoRotating = true;
                     startAutoRotation();
                 }
-            }, 3000);
+            }, resumeDelay);
         }
     }
     
@@ -1259,106 +1281,129 @@ function setupCardInteractions() {
         }
     });
     
-    // Touch events для мобильных
+    // Touch events для мобильных - оптимизированная версия
+    let touchStartTime = 0;
+    let touchStartY = 0;
+    let isTouchActive = false;
+    
     singleCardWrapper.addEventListener('touchstart', (e) => {
-        isCardDragging = true;
-        isAutoRotating = false;
-        stopAutoRotation();
-        touchStartX = e.touches[0].clientX;
+        const touch = e.touches[0];
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+        touchStartTime = Date.now();
         dragDistance = 0;
         hasDragged = false;
-        e.preventDefault();
-    }, { passive: false });
+        isTouchActive = true;
+        // НЕ вызываем preventDefault здесь - это позволит кликам работать
+    }, { passive: true });
     
     let touchLastRotation = 0;
     singleCardWrapper.addEventListener('touchmove', (e) => {
-        if (!isCardDragging) return;
+        if (!isTouchActive) return;
         
-        const deltaX = e.touches[0].clientX - touchStartX;
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - touchStartX;
+        const deltaY = Math.abs(touch.clientY - touchStartY);
         dragDistance = Math.abs(deltaX);
         
-        if (dragDistance > 5) {
+        // Если горизонтальное движение больше вертикального - это свайп
+        if (dragDistance > 10 && dragDistance > deltaY * 1.5) {
             hasDragged = true;
-        }
-        
-        const rotation = deltaX * 0.5;
-        touchLastRotation = rotation;
-        
-        // Плавное обновление через requestAnimationFrame
-        if (animationFrameId) {
-            cancelAnimationFrame(animationFrameId);
-        }
-        
-        function smoothTouchRotate() {
-            if (isCardDragging) {
-                singleCard.style.transform = `rotateY(${touchLastRotation}deg)`;
-                animationFrameId = requestAnimationFrame(smoothTouchRotate);
-            } else {
-                animationFrameId = null;
+            isCardDragging = true;
+            isAutoRotating = false;
+            stopAutoRotation();
+            
+            // Предотвращаем прокрутку только при свайпе
+            e.preventDefault();
+            
+            const rotation = deltaX * 0.5;
+            touchLastRotation = rotation;
+            
+            // Оптимизированное обновление - только при необходимости
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
             }
+            
+            // Используем прямую установку transform для лучшей производительности
+            singleCard.style.transform = `rotateY(${rotation}deg)`;
+            singleCard.style.willChange = 'transform';
         }
-        
-        animationFrameId = requestAnimationFrame(smoothTouchRotate);
-        e.preventDefault();
     }, { passive: false });
     
     singleCardWrapper.addEventListener('touchend', (e) => {
-        if (isCardDragging) {
-            isCardDragging = false;
-            
-            // Отменяем анимацию drag
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-                animationFrameId = null;
-            }
-            
-            if (hasDragged && dragDistance > swipeThreshold && !isSwitching) {
-                const finalTouchX = e.changedTouches[0].clientX;
-                const deltaX = finalTouchX - touchStartX;
-                
-                if (deltaX > 0) {
-                    const prevIndex = (currentCardIndex - 1 + subjects.length) % subjects.length;
-                    switchToCard(prevIndex, 'prev');
-                } else {
-                    const nextIndex = (currentCardIndex + 1) % subjects.length;
-                    switchToCard(nextIndex, 'next');
-                }
+        if (!isTouchActive) return;
+        
+        const touchEndTime = Date.now();
+        const touchDuration = touchEndTime - touchStartTime;
+        const finalTouchX = e.changedTouches[0].clientX;
+        const deltaX = finalTouchX - touchStartX;
+        
+        // Если был свайп
+        if (hasDragged && dragDistance > swipeThreshold && !isSwitching) {
+            if (deltaX > 0) {
+                const prevIndex = (currentCardIndex - 1 + subjects.length) % subjects.length;
+                switchToCard(prevIndex, 'prev');
             } else {
-                // Плавно возвращаем карточку
-                const startRotation = touchLastRotation;
-                const targetRotation = 0;
-                const duration = 300;
-                const startTime = performance.now();
-                
-                function returnToStart(currentTime) {
-                    const elapsed = currentTime - startTime;
-                    const progress = Math.min(elapsed / duration, 1);
-                    const easeProgress = 1 - Math.pow(1 - progress, 3);
-                    
-                    const currentRotation = startRotation + (targetRotation - startRotation) * easeProgress;
-                    singleCard.style.transform = `rotateY(${currentRotation}deg)`;
-                    
-                    if (progress < 1) {
-                        animationFrameId = requestAnimationFrame(returnToStart);
-                    } else {
-                        singleCard.style.transform = 'rotateY(0deg)';
-                        animationFrameId = null;
-                    }
+                const nextIndex = (currentCardIndex + 1) % subjects.length;
+                switchToCard(nextIndex, 'next');
+            }
+        } else if (!hasDragged && touchDuration < 300) {
+            // Быстрый тап без движения - это клик
+            const cardFront = singleCard.querySelector('.single-card-front');
+            if (cardFront) {
+                const subjectId = cardFront.dataset.subject;
+                if (subjectId) {
+                    handleCardClick(subjectId);
                 }
+            }
+        } else if (hasDragged) {
+            // Было движение, но недостаточно для свайпа - возвращаем карточку
+            const startRotation = touchLastRotation;
+            const targetRotation = 0;
+            const duration = 200; // Уменьшено для мобильных
+            const startTime = performance.now();
+            
+            function returnToStart(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
                 
-                animationFrameId = requestAnimationFrame(returnToStart);
+                const currentRotation = startRotation + (targetRotation - startRotation) * easeProgress;
+                singleCard.style.transform = `rotateY(${currentRotation}deg)`;
+                
+                if (progress < 1) {
+                    animationFrameId = requestAnimationFrame(returnToStart);
+                } else {
+                    singleCard.style.transform = 'rotateY(0deg)';
+                    singleCard.style.willChange = 'auto';
+                    animationFrameId = null;
+                }
             }
             
-            // Сбрасываем состояние
-            touchStartX = 0;
-            dragDistance = 0;
-            hasDragged = false;
-            touchLastRotation = 0;
+            animationFrameId = requestAnimationFrame(returnToStart);
         }
-    });
+        
+        // Сбрасываем состояние
+        isCardDragging = false;
+        isTouchActive = false;
+        touchStartX = 0;
+        touchStartY = 0;
+        dragDistance = 0;
+        hasDragged = false;
+        touchLastRotation = 0;
+        
+        // Отменяем анимацию drag
+        if (animationFrameId && !isSwitching) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+        }
+    }, { passive: true });
     
-    // Click на карточку
+    // Click на карточку (для десктопа)
     singleCard.addEventListener('click', (e) => {
+        // На мобильных клики обрабатываются через touchend
+        if ('ontouchstart' in window) return;
+        
         const cardFront = e.target.closest('.single-card-front');
         if (cardFront && !hasDragged && dragDistance <= 5) {
             const subjectId = cardFront.dataset.subject;
@@ -1402,14 +1447,20 @@ function startAutoRotation() {
     
     stopAutoRotation();
     
+    // Определяем, мобильное ли устройство
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+    
+    // На мобильных увеличиваем интервал для экономии ресурсов
+    const rotationInterval = isMobile ? 8000 : 5000;
+    
     autoRotateInterval = setInterval(() => {
         // Проверяем, что нет активных действий
-        if (!isCardDragging && isAutoRotating && !isSwitching) {
-            // Переключаем на следующую карточку каждые 5 секунд
+        if (!isCardDragging && isAutoRotating && !isSwitching && !isTouchActive) {
+            // Переключаем на следующую карточку
             const nextIndex = (currentCardIndex + 1) % subjects.length;
             switchToCard(nextIndex, 'next');
         }
-    }, 5000); // Меняем карточку каждые 5 секунд
+    }, rotationInterval);
 }
 
 function stopAutoRotation() {
@@ -1808,9 +1859,10 @@ async function showSubject(subjectKey) {
         zIndex: window.getComputedStyle(subjectContent).zIndex
     });
     
-    // Прокручиваем окно к началу
+    // Прокручиваем окно к началу только на десктопе (не на мобильных)
     subjectContent.scrollTop = 0;
-    window.scrollTo(0, 0);
+    // Убираем автоматическую прокрутку страницы - она вызывает проблемы на мобильных
+    // window.scrollTo(0, 0);
     
     // Сбрасываем состояние
     decodedTextContainer.innerHTML = '';
