@@ -240,46 +240,49 @@ function setTranslate(xPos, yPos, el) {
 // Навигация убрана
 
 // ===== 3D BUTTON EFFECTS (SMOOTH) =====
+// Кнопки neon-button больше не используются, заменены на карточки
 const neonButtons = document.querySelectorAll('.neon-button');
 let hoverTimeout;
 
-neonButtons.forEach(button => {
-    let isHovering = false;
-    
-    button.addEventListener('mouseenter', function() {
-        isHovering = true;
-        this.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-    });
-    
-    button.addEventListener('mousemove', function(e) {
-        if (!isHovering) return;
+if (neonButtons.length > 0) {
+    neonButtons.forEach(button => {
+        let isHovering = false;
         
-        clearTimeout(hoverTimeout);
-        const rect = this.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        button.addEventListener('mouseenter', function() {
+            isHovering = true;
+            this.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        });
         
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
+        button.addEventListener('mousemove', function(e) {
+            if (!isHovering) return;
+            
+            clearTimeout(hoverTimeout);
+            const rect = this.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            
+            // Более мягкие значения для плавности
+            const rotateX = (y - centerY) / 25;
+            const rotateY = (centerX - x) / 25;
+            
+            // Используем requestAnimationFrame для плавности
+            requestAnimationFrame(() => {
+                if (isHovering) {
+                    this.style.transform = `translateY(-8px) translateZ(20px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`;
+                }
+            });
+        });
         
-        // Более мягкие значения для плавности
-        const rotateX = (y - centerY) / 25;
-        const rotateY = (centerX - x) / 25;
-        
-        // Используем requestAnimationFrame для плавности
-        requestAnimationFrame(() => {
-            if (isHovering) {
-                this.style.transform = `translateY(-8px) translateZ(20px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`;
-            }
+        button.addEventListener('mouseleave', function() {
+            isHovering = false;
+            this.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            this.style.transform = '';
         });
     });
-    
-    button.addEventListener('mouseleave', function() {
-        isHovering = false;
-        this.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-        this.style.transform = '';
-    });
-});
+}
 
 // ===== SCROLL ANIMATIONS =====
 const observerOptions = {
@@ -296,10 +299,12 @@ const observer = new IntersectionObserver((entries) => {
     });
 }, observerOptions);
 
-// Observe buttons for scroll animations
-neonButtons.forEach(button => {
-    observer.observe(button);
-});
+// Observe buttons for scroll animations (если они есть)
+if (neonButtons.length > 0) {
+    neonButtons.forEach(button => {
+        observer.observe(button);
+    });
+}
 
 // ===== KEYBOARD SHORTCUTS =====
 document.addEventListener('keydown', (e) => {
@@ -399,12 +404,9 @@ smoothCursorFollow();
 const splashScreen = document.getElementById('splash-screen');
 const mainContainer = document.getElementById('main-container');
 
-window.addEventListener('load', () => {
-    // Добавляем класс loading к body
-    document.body.classList.add('loading');
-    
-    // После завершения анимации загрузчика скрываем splash screen
-    setTimeout(() => {
+// Функция для скрытия splash screen (вызывается всегда, даже при ошибках)
+function hideSplashScreen() {
+    try {
         if (splashScreen) {
             splashScreen.classList.add('hidden');
         }
@@ -415,32 +417,54 @@ window.addEventListener('load', () => {
         }
         
         // Убираем класс loading с body
+        document.body.classList.remove('loading');
+        
+        // Анимируем статистику
         setTimeout(() => {
-            document.body.classList.remove('loading');
-            
-            // Анимируем кнопки с задержкой для эффекта параллакса
-            neonButtons.forEach((button, index) => {
-                setTimeout(() => {
-                    button.style.opacity = '0';
-                    button.style.transform = 'translateY(80px) translateZ(-80px) rotateX(45deg) scale(0.7)';
-                    button.style.transition = 'all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-                    
-                    setTimeout(() => {
-                        button.style.opacity = '1';
-                        button.style.transform = 'translateY(0) translateZ(0) rotateX(0deg) scale(1)';
-                    }, 50);
-                }, 3500 + (index * 80)); // Начинаем после появления секции кнопок
-            });
-            
-            // Анимируем статистику
-            setTimeout(() => {
+            try {
                 animateStats();
-            }, 4000);
-        }, 500);
-    }, 3500); // Ждем завершения анимации загрузчика (2s) + небольшая задержка
+            } catch (error) {
+                console.error('Error animating stats:', error);
+            }
+        }, 1000);
+    } catch (error) {
+        console.error('Error hiding splash screen:', error);
+        // Принудительно скрываем splash screen даже при ошибке
+        if (splashScreen) {
+            splashScreen.style.display = 'none';
+        }
+        if (mainContainer) {
+            mainContainer.style.opacity = '1';
+            mainContainer.style.visibility = 'visible';
+        }
+    }
+}
+
+window.addEventListener('load', () => {
+    try {
+        // Добавляем класс loading к body
+        document.body.classList.add('loading');
+        
+        // После завершения анимации загрузчика скрываем splash screen
+        // Уменьшаем время ожидания для более быстрой загрузки
+        setTimeout(() => {
+            hideSplashScreen();
+        }, 2000); // Уменьшено с 3500 до 2000 мс
+    } catch (error) {
+        console.error('Error in load handler:', error);
+        // При ошибке все равно скрываем splash screen
+        setTimeout(hideSplashScreen, 1000);
+    }
 });
 
-<<<<<<< HEAD
+// Защита: если через 5 секунд splash screen все еще виден, принудительно скрываем его
+setTimeout(() => {
+    if (splashScreen && !splashScreen.classList.contains('hidden')) {
+        console.warn('Splash screen still visible after 5 seconds, forcing hide');
+        hideSplashScreen();
+    }
+}, 5000);
+
 // ===== TWITCH API CONFIGURATION =====
 const TWITCH_CHANNEL = 'asds__games';
 
@@ -952,9 +976,21 @@ function init3DCylinder() {
         
         if (!singleCard || !singleCardWrapper || !cardIndicators) {
             console.warn('Card elements not found, retrying...');
-            setTimeout(init3DCylinder, 100);
+            // Ограничиваем количество попыток, чтобы не зависнуть
+            if (typeof init3DCylinder.retryCount === 'undefined') {
+                init3DCylinder.retryCount = 0;
+            }
+            init3DCylinder.retryCount++;
+            if (init3DCylinder.retryCount < 10) {
+                setTimeout(init3DCylinder, 100);
+            } else {
+                console.error('Failed to initialize card after 10 attempts');
+            }
             return;
         }
+        
+        // Сбрасываем счетчик при успешной инициализации
+        init3DCylinder.retryCount = 0;
         
         // Создаем индикаторы
         subjects.forEach((subjectId, index) => {
@@ -1455,18 +1491,39 @@ function updateDynamicLinks(subjectId) {
 function initAll() {
     try {
         console.log('🚀 Initializing all elements...');
-        initSubjectElements();
-        initSubjectButtons();
-        initLinksSection();
         
-        // Инициализируем цилиндр с небольшой задержкой, чтобы не блокировать загрузку
+        // Инициализируем элементы с обработкой ошибок для каждого
+        try {
+            initSubjectElements();
+        } catch (error) {
+            console.error('Error initializing subject elements:', error);
+        }
+        
+        try {
+            initSubjectButtons();
+        } catch (error) {
+            console.error('Error initializing subject buttons:', error);
+        }
+        
+        try {
+            initLinksSection();
+        } catch (error) {
+            console.error('Error initializing links section:', error);
+        }
+        
+        // Инициализируем карточку с небольшой задержкой, чтобы не блокировать загрузку
         setTimeout(() => {
-            init3DCylinder();
+            try {
+                init3DCylinder();
+            } catch (error) {
+                console.error('Error initializing card:', error);
+            }
         }, 100);
         
         console.log('✅ Initialization complete');
     } catch (error) {
-        console.error('Error during initialization:', error);
+        console.error('Critical error during initialization:', error);
+        // Не блокируем загрузку страницы даже при критической ошибке
     }
 }
 
