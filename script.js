@@ -336,17 +336,18 @@ let lastScroll = 0;
 window.addEventListener('scroll', () => {
     const currentScroll = window.pageYOffset;
     const particles = document.querySelector('.particles');
-    const container = document.querySelector('.container');
+    // Убрали поворот контейнера - он блокировал клики на кнопках
     
     if (particles) {
         const speed = currentScroll * 0.1;
         particles.style.transform = `translateY(${speed}px)`;
     }
     
-    if (container) {
-        const rotateY = (currentScroll / 100) * 0.5;
-        container.style.transform = `perspective(1000px) rotateY(${rotateY}deg)`;
-    }
+    // Убрали поворот контейнера для исправления кликабельности кнопок
+    // if (container) {
+    //     const rotateY = (currentScroll / 100) * 0.5;
+    //     container.style.transform = `perspective(1000px) rotateY(${rotateY}deg)`;
+    // }
     
     lastScroll = currentScroll;
 });

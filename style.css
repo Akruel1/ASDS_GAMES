@@ -23,8 +23,9 @@ body {
     overflow-x: hidden;
     min-height: 100vh;
     position: relative;
-    perspective: 1000px;
+    perspective: none;
     pointer-events: auto;
+    transform: none !important;
 }
 
 body > * {
@@ -508,8 +509,9 @@ body.loading {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    transform-style: preserve-3d;
+    transform-style: flat;
     pointer-events: auto !important;
+    transform: none !important;
 }
 
 .container > * {
