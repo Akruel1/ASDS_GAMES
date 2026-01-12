@@ -440,15 +440,126 @@ window.addEventListener('load', () => {
     }, 3500); // Ждем завершения анимации загрузчика (2s) + небольшая задержка
 });
 
-// ===== ANIMATE FOOTER STATS =====
-function animateStats() {
+// ===== TWITCH API CONFIGURATION =====
+const TWITCH_CHANNEL = 'asds__games';
+
+// ===== FETCH TWITCH DATA =====
+async function fetchTwitchData() {
+    try {
+        // Метод 1: Используем публичный Twitch API proxy
+        const proxyUrl = `https://twitch-api-proxy.vercel.app/api/user/${TWITCH_CHANNEL}`;
+        const response = await fetch(proxyUrl);
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data && (data.followers || data.viewers)) {
+                return {
+                    followers: data.followers || 0,
+                    viewers: data.viewers || 0
+                };
+            }
+        }
+    } catch (error) {
+        console.warn('Twitch API proxy failed, trying alternative:', error);
+    }
+    
+    // Метод 2: Альтернативный через decapi.me (публичный API)
+    try {
+        // Получаем количество подписчиков
+        const followersProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://decapi.me/twitch/followcount/${TWITCH_CHANNEL}`)}`;
+        const followersResponse = await fetch(followersProxy);
+        
+        let followers = 0;
+        if (followersResponse.ok) {
+            const followersData = await followersResponse.json();
+            followers = parseInt(followersData.contents) || 0;
+        }
+        
+        // Получаем количество зрителей (если идет стрим)
+        const viewersProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://decapi.me/twitch/viewercount/${TWITCH_CHANNEL}`)}`;
+        const viewersResponse = await fetch(viewersProxy);
+        
+        let viewers = 0;
+        if (viewersResponse.ok) {
+            const viewersData = await viewersResponse.json();
+            const viewersText = viewersData.contents || '0';
+            viewers = parseInt(viewersText) || 0;
+        }
+        
+        if (followers > 0 || viewers > 0) {
+            return {
+                followers: followers,
+                viewers: viewers
+            };
+        }
+    } catch (error) {
+        console.warn('Alternative API failed:', error);
+    }
+    
+    return null;
+}
+
+// ===== UPDATE FOOTER STATS FROM TWITCH =====
+let currentViewers = 0;
+let currentFollowers = 0;
+
+async function updateTwitchStats() {
+    const data = await fetchTwitchData();
     const viewersCount = document.getElementById('viewers-count');
     const followersCount = document.getElementById('followers-count');
     
     if (viewersCount && followersCount) {
-        animateNumber(viewersCount, 0, 1250, 2000);
-        animateNumber(followersCount, 0, 8500, 2500);
+        if (data && (data.viewers > 0 || data.followers > 0)) {
+            // Используем реальные данные с Twitch
+            const newViewers = data.viewers || 0;
+            const newFollowers = data.followers || 0;
+            
+            // Получаем текущие значения из DOM
+            const currentViewersValue = parseInt(viewersCount.textContent.replace(/\s/g, '')) || 0;
+            const currentFollowersValue = parseInt(followersCount.textContent.replace(/\s/g, '')) || 0;
+            
+            // Обновляем только если значения изменились
+            if (currentViewersValue !== newViewers) {
+                animateNumber(viewersCount, currentViewersValue, newViewers, 1500);
+                currentViewers = newViewers;
+            }
+            if (currentFollowersValue !== newFollowers) {
+                animateNumber(followersCount, currentFollowersValue, newFollowers, 2000);
+                currentFollowers = newFollowers;
+            }
+        } else {
+            // Fallback на статические значения только при первой загрузке
+            if (currentViewers === 0 && currentFollowers === 0) {
+                animateNumber(viewersCount, 0, 1250, 2000);
+                animateNumber(followersCount, 0, 8500, 2500);
+                currentViewers = 1250;
+                currentFollowers = 8500;
+            }
+        }
     }
+}
+
+// ===== PERIODIC UPDATE =====
+// Обновляем данные каждые 60 секунд
+let statsUpdateInterval = null;
+function startStatsUpdate() {
+    if (statsUpdateInterval) {
+        clearInterval(statsUpdateInterval);
+    }
+    statsUpdateInterval = setInterval(() => {
+        updateTwitchStats();
+    }, 60000); // Обновление каждую минуту
+}
+
+// Запускаем периодическое обновление после первой загрузки
+setTimeout(() => {
+    startStatsUpdate();
+}, 5000);
+
+// ===== ANIMATE FOOTER STATS =====
+function animateStats() {
+    // Используем функцию обновления из Twitch
+    updateTwitchStats();
 }
 
 function animateNumber(element, start, end, duration) {
