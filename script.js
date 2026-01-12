@@ -440,6 +440,7 @@ window.addEventListener('load', () => {
     }, 3500); // Ждем завершения анимации загрузчика (2s) + небольшая задержка
 });
 
+<<<<<<< HEAD
 // ===== TWITCH API CONFIGURATION =====
 const TWITCH_CHANNEL = 'asds__games';
 
@@ -561,7 +562,6 @@ function animateStats() {
     // Используем функцию обновления из Twitch
     updateTwitchStats();
 }
-
 function animateNumber(element, start, end, duration) {
     let startTimestamp = null;
     const step = (timestamp) => {
