@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASDS Games - Gaming Stream</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Начальный экран -->
+    <div class="splash-screen" id="splash-screen">
+        <div class="splash-content">
+            <h1 class="splash-title" data-text="ASDS GAMES">ASDS GAMES</h1>
+            <p class="splash-subtitle">Gaming Stream & Content Creator</p>
+            <div class="splash-loader">
+                <div class="loader-line"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Фоновые эффекты -->
+    <div class="background-overlay"></div>
+    <div class="particles"></div>
+    <div class="grid-pattern"></div>
+    <div class="floating-shapes"></div>
+    <div class="wave-effect"></div>
+    <div class="energy-lines"></div>
+    
+    <!-- Основной контент -->
+    <div class="container" id="main-container">
+        <!-- Анимированная неоновая надпись -->
+        <header class="main-header">
+            <h1 class="neon-title" data-text="ASDS GAMES">ASDS GAMES</h1>
+            <p class="subtitle">Gaming Stream & Content</p>
+        </header>
+
+        <!-- Основной контент -->
+        <main class="content">
+            <!-- Секция с вращающейся карточкой -->
+            <section class="card-section" id="main-section">
+                <div class="card-container">
+                    <div class="single-card-wrapper" id="single-card-wrapper">
+                        <div class="single-card" id="single-card">
+                            <!-- Карточка будет обновляться через JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Индикаторы карточек -->
+                    <div class="card-indicators" id="card-indicators">
+                        <!-- Индикаторы будут добавлены через JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- Динамические кнопки со ссылками -->
+                <div class="dynamic-links-container" id="dynamic-links-container">
+                    <div class="dynamic-links" id="dynamic-links">
+                        <!-- Кнопки будут добавлены динамически -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Секция со ссылками -->
+            <section class="links-section" id="links-section" style="display: none;">
+                <div class="links-container">
+                    <h2 class="links-title">ВСЕ ССЫЛКИ</h2>
+                    
+                    <div class="links-category">
+                        <h3 class="category-title">СТАРШИЙ СЫН</h3>
+                        <div class="links-grid">
+                            <a href="https://www.twitch.tv/asdsgames" target="_blank" class="link-button">
+                                <span class="link-icon">🎮</span>
+                                <span class="link-text">Twitch</span>
+                            </a>
+                            <a href="https://www.youtube.com/@asdsgames" target="_blank" class="link-button">
+                                <span class="link-icon">▶️</span>
+                                <span class="link-text">YouTube</span>
+                            </a>
+                            <a href="https://www.patreon.com/asdsgames" target="_blank" class="link-button">
+                                <span class="link-icon">🎁</span>
+                                <span class="link-text">Patreon</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="links-category">
+                        <h3 class="category-title">МЛАДШИЙ СЫН</h3>
+                        <div class="links-grid">
+                            <a href="https://www.twitch.tv/asdsgames" target="_blank" class="link-button">
+                                <span class="link-icon">🎮</span>
+                                <span class="link-text">Twitch</span>
+                            </a>
+                            <a href="https://www.youtube.com/@asdsgames" target="_blank" class="link-button">
+                                <span class="link-icon">▶️</span>
+                                <span class="link-text">YouTube</span>
+                            </a>
+                            <a href="https://www.tiktok.com/@asdsgames" target="_blank" class="link-button">
+                                <span class="link-icon">🎵</span>
+                                <span class="link-text">TikTok</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="links-category">
+                        <h3 class="category-title">ДОНАТЫ</h3>
+                        <div class="links-grid">
+                            <a href="https://www.patreon.com/asdsgames" target="_blank" class="link-button donate-button">
+                                <span class="link-icon">💎</span>
+                                <span class="link-text">Patreon</span>
+                            </a>
+                            <a href="https://www.donationalerts.com/r/asdsfamily" target="_blank" class="link-button donate-button">
+                                <span class="link-icon">💰</span>
+                                <span class="link-text">DonationAlerts</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Плавающее окно Twitch -->
+            <div class="floating-twitch" id="floating-twitch">
+                <div class="twitch-window" id="twitch-window">
+                    <div class="twitch-header">
+                        <div class="twitch-controls">
+                            <button class="twitch-control-btn minimize-btn" id="minimize-twitch" title="Свернуть">−</button>
+                            <button class="twitch-control-btn maximize-btn" id="maximize-twitch" title="Развернуть">□</button>
+                            <button class="twitch-control-btn close-btn" id="close-twitch" title="Закрыть">✕</button>
+                        </div>
+                        <h2 class="twitch-title">
+                            <span class="live-indicator"></span>
+                            LIVE STREAM
+                        </h2>
+                    </div>
+                    <div class="twitch-iframe-wrapper">
+                        <iframe 
+                            src="https://player.twitch.tv/?channel=asds__games&parent=localhost&parent=127.0.0.1&muted=false"
+                            frameborder="0"
+                            allowfullscreen="true"
+                            scrolling="no"
+                            id="twitch-embed"
+                            class="twitch-iframe">
+                        </iframe>
+                    </div>
+                </div>
+                <button class="open-twitch-btn" id="open-twitch-btn">
+                    <span class="btn-icon">📺</span>
+                    <span class="btn-text">Открыть стрим</span>
+                </button>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-logo">ASDS GAMES</div>
+                    <p class="footer-tagline">Gaming Stream & Content Creator</p>
+                </div>
+                <div class="footer-section">
+                    <div class="footer-stats">
+                        <div class="stat-item">
+                            <span class="stat-value" id="viewers-count">0</span>
+                            <span class="stat-label">Зрителей</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="followers-count">0</span>
+                            <span class="stat-label">Подписчиков</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <div class="footer-links">
+                        <a href="#" class="footer-link">Privacy Policy</a>
+                        <span class="footer-separator">|</span>
+                        <a href="#" class="footer-link">Contact</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p class="footer-copyright">© 2026 ASDS Games. All rights reserved.</p>
+                <div class="footer-tech">
+                    <span class="tech-item">HTML5</span>
+                    <span class="tech-item">CSS3</span>
+                    <span class="tech-item">JS</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Интерактивный блок субъекта (вне контейнера для правильного z-index) -->
+    <section class="subject-content" id="subject-content">
+        <div class="subject-content-grid"></div>
+        <button class="close-subject-btn" id="close-subject-btn">✕</button>
+        
+        <!-- Платформа с лучом света -->
+        <div class="light-platform" id="light-platform">
+            <div class="platform-base"></div>
+            <div class="platform-glow"></div>
+            <div class="light-beam" id="light-beam"></div>
+        </div>
+
+        <!-- Текстовый блок с анимацией декодирования -->
+        <div class="subject-text-container" id="subject-text-container">
+            <div class="decoded-text" id="decoded-text"></div>
+        </div>
+
+        <!-- Голографическая рамка -->
+        <div class="hologram-frame" id="hologram-frame">
+            <div class="hologram-lines">
+                <div class="hologram-line line-top"></div>
+                <div class="hologram-line line-right"></div>
+                <div class="hologram-line line-bottom"></div>
+                <div class="hologram-line line-left"></div>
+                <div class="hologram-corner corner-tl"></div>
+                <div class="hologram-corner corner-tr"></div>
+                <div class="hologram-corner corner-br"></div>
+                <div class="hologram-corner corner-bl"></div>
+            </div>
+            <div class="hologram-image-container">
+                <img class="hologram-image" id="hologram-image" src="" alt="Subject Photo">
+            </div>
+        </div>
+
+        <!-- Кнопки соцсетей или связь -->
+        <div class="subject-links" id="subject-links"></div>
+    </section>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
